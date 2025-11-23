@@ -28,7 +28,7 @@ Content-Type: application/json
 ### 获取所有病人（分页）
 GET {{baseUrl}}/patients?skip=0&limit=10
 
-### 通过 patient_id 获取单个病人（请根据实际 patient_id 修改）
+### 通过 patient_id 获取单个病人（请根据实际 patient_id 修改） ⭐
 GET {{baseUrl}}/patients/1
 
 ############################################################
@@ -90,11 +90,15 @@ Content-Type: application/json
 ### 列出全部 preference（原始完整数据）
 GET {{baseUrl}}/preferences?skip=0&limit=20
 
-### 根据 patient_id + preference_type 返回精简结果（pharmacy）
+### 旧接口（按 patient_id + preference_type 查询精简结果）
 GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=pharmacy
-
-### 根据 patient_id + preference_type 返回精简结果（lab）
 GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=lab
+
+### 新接口：根据 patient_id 返回 pharmacy 偏好（只含 pharmacy_id + notes） ⭐
+GET {{baseUrl}}/preferences/pharmacy?patient_id=1
+
+### 新接口：根据 patient_id 返回 lab 偏好（只含 lab_id + notes） ⭐
+GET {{baseUrl}}/preferences/lab?patient_id=1
 
 ############################################################
 # Prescription

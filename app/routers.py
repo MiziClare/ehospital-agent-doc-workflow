@@ -137,6 +137,67 @@ def get_preferences_by_patient_and_type(
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
+# 新接口：patient 的 pharmacy 偏好（只含 pharmacy_id + notes）
+@router.get(
+    "/preferences/pharmacy",
+    response_model=list[schemas.PatientPreferenceSlimOut],
+)
+def get_pharmacy_preferences(
+    patient_id: int = Query(..., description="Patient ID"),
+):
+    """
+    根据 patient_id 返回该病人的所有 pharmacy 偏好：
+    - target_id = pharmacy_id
+    - notes
+    """
+    try:
+        records = crud.get_pharmacy_preferences_by_patient(patient_id)
+        result = []
+        for r in records:
+            target_id = r.get("pharmacy_id")
+            if target_id is None:
+                continue
+            result.append(
+                schemas.PatientPreferenceSlimOut(
+                    target_id=target_id,
+                    notes=r.get("notes"),
+                )
+            )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# 新接口：patient 的 lab 偏好（只含 lab_id + notes）
+@router.get(
+    "/preferences/lab",
+    response_model=list[schemas.PatientPreferenceSlimOut],
+)
+def get_lab_preferences(
+    patient_id: int = Query(..., description="Patient ID"),
+):
+    """
+    根据 patient_id 返回该病人的所有 lab 偏好：
+    - target_id = lab_id
+    - notes
+    """
+    try:
+        records = crud.get_lab_preferences_by_patient(patient_id)
+        result = []
+        for r in records:
+            target_id = r.get("lab_id")
+            if target_id is None:
+                continue
+            result.append(
+                schemas.PatientPreferenceSlimOut(
+                    target_id=target_id,
+                    notes=r.get("notes"),
+                )
+            )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
 # Prescription
 @router.post("/prescriptions", response_model=schemas.PrescriptionFormOut)
 def create_prescription(payload: schemas.PrescriptionFormCreate):
@@ -357,4 +418,3 @@ def run_workflow(payload: WorkflowRequest):
         arguments=route["arguments"],
         result=result
     )
-
