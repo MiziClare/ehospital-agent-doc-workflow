@@ -1,0 +1,209 @@
+### 全局变量
+@baseUrl = http://127.0.0.1:8000/api
+# 如果你以后再开放根路径挂载，可以切换回：
+# @baseUrl = http://127.0.0.1:8000
+
+############################################################
+# Patients
+############################################################
+
+### 创建一个病人
+POST {{baseUrl}}/patients
+Content-Type: application/json
+
+{
+  "name": "Test Patient 01",
+  "dob": "1980-01-01",
+  "gender": "Male",
+  "contact_info": "123 Test Street",
+  "phone_number": "123-456-7890",
+  "OHIP_code": null,
+  "private_insurance_name": null,
+  "private_insurance_id": null,
+  "weight_kg": "70",
+  "height_cm": "175",
+  "family_doctor_id": null
+}
+
+### 获取所有病人（分页）
+GET {{baseUrl}}/patients?skip=0&limit=10
+
+### 通过 patient_id 获取单个病人（请根据实际 patient_id 修改）
+GET {{baseUrl}}/patients/1
+
+############################################################
+# Diagnosis
+############################################################
+
+### 为 patient_id=1 创建一条诊断记录
+POST {{baseUrl}}/diagnosis
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "doctor_id": 1,
+  "diagnosis_code": "DX001",
+  "diagnosis_description": "Test diagnosis description",
+  "diagnosis_date": "2025-05-17"
+}
+
+### 通过 query 方式按 patient_id 获取该病人的所有诊断
+GET {{baseUrl}}/diagnosis?patient_id=1
+
+### 通过 path 方式按 patient_id 获取该病人的所有诊断
+GET {{baseUrl}}/diagnosis/1
+
+### 通过 query 方式获取该病人最新诊断 ⭐
+GET {{baseUrl}}/diagnosis/latest?patient_id=1
+
+### 通过 path 方式获取该病人最新诊断 ⭐
+GET {{baseUrl}}/diagnosis/latest/1
+
+############################################################
+# Patient Preference
+############################################################
+
+### 为 patient_id=1 创建一个 pharmacy 偏好
+POST {{baseUrl}}/preferences
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "preference_type": "pharmacy",
+  "pharmacy_id": 1,
+  "lab_id": null,
+  "notes": "Preferred pharmacy for regular meds"
+}
+
+### 为 patient_id=1 创建一个 lab 偏好
+POST {{baseUrl}}/preferences
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "preference_type": "lab",
+  "pharmacy_id": null,
+  "lab_id": 1,
+  "notes": "Preferred lab for blood tests"
+}
+
+### 列出全部 preference（原始完整数据）
+GET {{baseUrl}}/preferences?skip=0&limit=20
+
+### 根据 patient_id + preference_type 返回精简结果（pharmacy）
+GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=pharmacy
+
+### 根据 patient_id + preference_type 返回精简结果（lab）
+GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=lab
+
+############################################################
+# Prescription
+############################################################
+
+### 为 patient_id=1 创建一条处方（prescription_id 由服务端自增）
+POST {{baseUrl}}/prescriptions
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "prescriber_id": "DOC001",
+  "medication_name": "Amoxicillin",
+  "medication_strength": "500mg",
+  "medication_form": "Tablet",
+  "dosage_instructions": "Take 1 tablet 3 times daily with food",
+  "quantity": 21,
+  "refills_allowed": 2,
+  "date_prescribed": "2025-11-22T00:00:00.000Z",
+  "expiry_date": "2025-12-31",
+  "status": "active",
+  "notes": "Complete full course even if feeling better",
+  "pharmacy_id": 1
+}
+
+### 列出所有处方
+GET {{baseUrl}}/prescriptions?skip=0&limit=20
+
+### 通过 prescription_id 获取单条处方（根据实际返回的 id 修正）
+GET {{baseUrl}}/prescriptions/1
+
+### 通过 path 方式获取 patient_id=1 最新处方 + pharmacy 信息 ⭐
+GET {{baseUrl}}/prescriptions/latest/1
+
+############################################################
+# Requisition
+############################################################
+
+### 为 patient_id=1 创建一条检验申请（requisition_id 由服务端自增）
+POST {{baseUrl}}/requisitions
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "lab_id": 1,
+  "department": "General Medicine",
+  "test_type": "Laboratory Test",
+  "test_code": null,
+  "clinical_info": null,
+  "date_requested": "2025-11-22T00:00:00.000Z",
+  "priority": "Routine",
+  "status": "Pending",
+  "result_date": null,
+  "notes": "Initial blood work"
+}
+
+### 列出所有检验申请
+GET {{baseUrl}}/requisitions?skip=0&limit=20
+
+### 通过 requisition_id 获取单条检验申请（根据实际返回的 id 修正）
+GET {{baseUrl}}/requisitions/1
+
+### 通过 path 方式获取 patient_id=1 最新检验申请 + lab 信息 ⭐
+GET {{baseUrl}}/requisitions/latest/1
+
+############################################################
+# Pharmacy
+############################################################
+
+### 创建一个 Pharmacy
+POST {{baseUrl}}/pharmacies
+Content-Type: application/json
+
+{
+  "name": "Test Pharmacy 01",
+  "email": "pharmacy01@example.com",
+  "phone_number": "555-111-2222",
+  "address": "100 Pharmacy Street",
+  "license_no": "LIC-0001",
+  "status": "active",
+  "registered_on": "2025-07-11T20:42:41.000Z"
+}
+
+### 列出所有 Pharmacy
+GET {{baseUrl}}/pharmacies?skip=0&limit=20
+
+### 根据 pharmacy_id 获取单个 Pharmacy（根据实际 id 修改）
+GET {{baseUrl}}/pharmacies/1
+
+############################################################
+# Lab
+############################################################
+
+### 创建一个 Lab
+POST {{baseUrl}}/labs
+Content-Type: application/json
+
+{
+  "name": "Test Lab 01",
+  "email": "test.lab@example.com",
+  "phone_number": "555-987-6543",
+  "address": "456 Lab Avenue, Ottawa, ON",
+  "license_no": "LAB-TEST-0001",
+  "status": "active",
+  "registered_on": "2025-11-22T19:02:08.000Z"
+}
+
+### 列出所有 Lab
+GET {{baseUrl}}/labs?skip=0&limit=20
+
+### 根据 lab_id 获取单个 Lab（根据实际 id 修改）
+GET {{baseUrl}}/labs/1
