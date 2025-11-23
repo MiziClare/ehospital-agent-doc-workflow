@@ -13,7 +13,7 @@ REMOTE_TABLES = {
     "lab_registration": "https://aetab8pjmb.us-east-1.awsapprunner.com/table/lab_registration",
 }
 
-TIMEOUT = 6  # seconds
+TIMEOUT = 60  # seconds. Increased to handle long-running AI workflows.
 
 
 def _get_remote(table: str) -> Dict[str, Any]:
@@ -164,7 +164,12 @@ def create_prescription(obj_in: schemas.PrescriptionFormCreate) -> Dict[str, Any
     new_id = str(max_id + 1 if max_id > 0 else 1)
     payload = obj_in.dict()
     payload["prescription_id"] = new_id
-    return _post_remote("prescription_form", payload)
+
+    # 调用远端 API 写入数据
+    _post_remote("prescription_form", payload)
+
+    # 直接返回我们自己构造的、结构完整的 payload，而不是远端 API 的响应
+    return payload
 
 
 def get_prescriptions(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
@@ -217,7 +222,12 @@ def create_requisition(obj_in: schemas.RequisitionFormCreate) -> Dict[str, Any]:
     new_id = str(max_id + 1 if max_id > 0 else 1)
     payload = obj_in.dict()
     payload["requisition_id"] = new_id
-    return _post_remote("requisition_form", payload)
+
+    # 调用远端 API 写入数据
+    _post_remote("requisition_form", payload)
+
+    # 直接返回我们自己构造的、结构完整的 payload，而不是远端 API 的响应
+    return payload
 
 
 def get_requisitions(skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:

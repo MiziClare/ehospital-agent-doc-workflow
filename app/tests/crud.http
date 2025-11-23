@@ -211,3 +211,81 @@ GET {{baseUrl}}/labs?skip=0&limit=20
 
 ### 根据 lab_id 获取单个 Lab（根据实际 id 修改）
 GET {{baseUrl}}/labs/1
+
+############################################################
+# Workflow / Agent tools
+############################################################
+
+### Workflow: create prescription from latest diagnosis for patient 1
+### (English instruction for LLM, for your own reference)
+# 1. Call GET {{baseUrl}}/diagnosis/latest/1 to obtain the latest
+#    diagnosis_description for patient_id=1.
+# 2. Based on that description, decide appropriate medication fields.
+# 3. Then call the tool "tool_create_prescription_from_latest_diagnosis"
+#    with patient_id=1 and the decided fields below.
+POST {{baseUrl}}/workflow
+Content-Type: application/json
+
+{
+  "tool": "tool_create_prescription_from_latest_diagnosis",
+  "arguments": {
+    "patient_id": 1,
+    "prescriber_id": "DOC001",
+
+    "medication_name": "Amoxicillin",
+    "medication_strength": "500mg",
+    "medication_form": "Tablet",
+    "dosage_instructions": "Take 1 tablet orally three times daily with food",
+    "quantity": 21,
+    "refills_allowed": 0,
+    "status": "active",
+    "notes": "Based on the latest diagnosis, complete full 7-day course."
+  },
+  "query": "Generate an antibiotic prescription for patient 1 according to the latest diagnosis."
+}
+
+
+### Workflow: create requisition from latest diagnosis for patient 1
+### (English instruction for LLM, for your own reference)
+# 1. Call GET {{baseUrl}}/diagnosis/latest/1 to obtain the latest
+#    diagnosis_description for patient_id=1.
+# 2. Based on that description, decide which lab test is appropriate.
+# 3. Then call the tool "tool_create_requisition_from_latest_diagnosis"
+#    with patient_id=1 and the decided fields below.
+POST {{baseUrl}}/workflow
+Content-Type: application/json
+
+{
+  "tool": "tool_create_requisition_from_latest_diagnosis",
+  "arguments": {
+    "patient_id": 1,
+    "department": "General Medicine",
+
+    "test_type": "Complete Blood Count",
+    "test_code": "CBC",
+    "clinical_info": "Baseline blood work according to the latest diagnosis.",
+    "priority": "Routine",
+    "status": "Pending",
+    "notes": "Please perform within the next 48 hours."
+  },
+  "query": "Generate an appropriate lab requisition for patient 1 according to the latest diagnosis."
+}
+
+### High-level workflow:
+### Let the backend AI agent read the latest diagnosis for patient 1,
+### then automatically generate BOTH:
+###   - one PRESCRIPTION_FORM (with pharmacy_id = null)
+###   - one REQUISITION_FORM (with lab_id = null)
+### and store them into the database tables.
+###
+### Example English instruction for your LLM orchestration layer:
+###   "For patient 1, call the backend API /workflow/generate-orders
+###    with {\"patient_id\": 1}. The backend agent will read the latest
+###    diagnosis_description from /diagnosis/latest/1, design an appropriate
+###    prescription and lab requisition, and persist both records."
+POST {{baseUrl}}/workflow/generate-orders
+Content-Type: application/json
+
+{
+  "patient_id": 4
+}
