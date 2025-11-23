@@ -127,6 +127,22 @@ def get_preferences_by_patient_and_type(patient_id: int, preference_type: str) -
     ]
 
 
+# 新增：专门获取 pharmacy 偏好
+def get_pharmacy_preferences_by_patient(patient_id: int) -> List[Dict[str, Any]]:
+    """
+    返回某个 patient 所有 preference_type = 'pharmacy' 的偏好记录。
+    """
+    return get_preferences_by_patient_and_type(patient_id, "pharmacy")
+
+
+# 新增：专门获取 lab 偏好
+def get_lab_preferences_by_patient(patient_id: int) -> List[Dict[str, Any]]:
+    """
+    返回某个 patient 所有 preference_type = 'lab' 的偏好记录。
+    """
+    return get_preferences_by_patient_and_type(patient_id, "lab")
+
+
 # ---------------- Prescription ----------------
 
 def create_prescription(obj_in: schemas.PrescriptionFormCreate) -> Dict[str, Any]:
