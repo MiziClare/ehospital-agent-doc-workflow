@@ -147,9 +147,12 @@ def get_lab_preferences_by_patient(patient_id: int) -> List[Dict[str, Any]]:
 
 def create_prescription(obj_in: schemas.PrescriptionFormCreate) -> Dict[str, Any]:
     """生成自增 prescription_id 并调用远端 POST."""
-    data = _get_remote("prescription_form")
+
+    # 步骤 1: 读取所有数据
+    data = _get_remote("prescription_form") # <-- 第一次网络请求 (GET)
     records = _extract_records(data)
 
+    # 步骤 2: 在本地计算下一个 ID
     max_id = 0
     for r in records:
         rid = r.get("prescription_id") or r.get("id")
@@ -165,10 +168,9 @@ def create_prescription(obj_in: schemas.PrescriptionFormCreate) -> Dict[str, Any
     payload = obj_in.dict()
     payload["prescription_id"] = new_id
 
-    # 调用远端 API 写入数据
-    _post_remote("prescription_form", payload)
+    # 步骤 3: 写入新数据
+    _post_remote("prescription_form", payload) # <-- 第二次网络请求 (POST)
 
-    # 直接返回我们自己构造的、结构完整的 payload，而不是远端 API 的响应
     return payload
 
 
