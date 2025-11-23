@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from . import crud, schemas
 from app.schemas import WorkflowRequest, WorkflowResponse
-from app.llm_tools import llm_route_to_tool, execute_tool
+from app.llm_tools import execute_tool
 
 router = APIRouter()
 
@@ -338,7 +338,6 @@ def get_latest_requisition_with_lab(patient_id: int = Path(..., description="Pat
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-
 # Pharmacy
 @router.post("/pharmacies", response_model=schemas.PharmacyRegistrationOut)
 def create_pharmacy(payload: schemas.PharmacyRegistrationCreate):
@@ -398,23 +397,76 @@ def get_lab(lab_id: int):
 @router.post("/workflow", response_model=WorkflowResponse)
 def run_workflow(payload: WorkflowRequest):
     """
-    工作流入口：
-    - 模型决定要调用哪个工具
-    - 我们执行工具
-    - 返回工具执行结果
+    Workflow entry point.
+
+    This endpoint is NOT a chat interface.
+    It only executes a specific tool with structured JSON arguments.
+
+    Request body:
+      {
+        "tool": "<tool_name>",        # e.g. "tool_create_prescription_from_latest_diagnosis"
+        "arguments": { ... },         # tool-specific JSON payload
+        "query": "...optional..."     # optional natural language prompt (not used here)
+      }
     """
+    try:
+        # 我们的工具函数期望一个名为 'args' 的字典
+        result = execute_tool(payload.tool, payload.arguments)
+        return WorkflowResponse(
+            tool=payload.tool,
+            arguments=payload.arguments,
+            result=result,
+        )
+    except Exception as e:
+        # 抛给客户端，由上层 LLM 决定如何处理错误
+        raise HTTPException(status_code=502, detail=str(e))
 
-    # ① 模型决定调用哪个工具
-    route = llm_route_to_tool(payload.query)
 
-    # route = { "function_name": "...", "arguments": {...}}
+# ✅ 新增：高层 API，只要传 patient_id，让 AI 生成处方+检验单并入库
+@router.post("/workflow/generate-orders", response_model=schemas.AutoOrdersResponse)
+def generate_orders_from_latest_diagnosis(body: schemas.AutoOrdersRequest):
+    """
+    High-level API for front-end.
 
-    # ② 执行工具
-    result = execute_tool(route["function_name"], route["arguments"])
+    INPUT JSON:
+      {
+        "patient_id": 1
+      }
 
-    # ③ 返回工具执行结果（无自然语言）
-    return WorkflowResponse(
-        tool=route["function_name"],
-        arguments=route["arguments"],
-        result=result
-    )
+    BEHAVIOR:
+      - For this patient_id, backend:
+        1) Reads the latest diagnosis (via CRUD).
+        2) Uses the LLM tool 'tool_generate_orders_from_latest_diagnosis'
+           to design BOTH:
+             * one PRESCRIPTION_FORM record (pharmacy_id = null)
+             * one REQUISITION_FORM record (lab_id = null)
+        3) Persists both records into remote tables.
+      - Returns the created rows.
+
+    OUTPUT JSON:
+      {
+        "patient_id": 1,
+        "prescription": { ...PrescriptionFormOut... },
+        "requisition": { ...RequisitionFormOut... }
+      }
+    """
+    try:
+        # 我们的工具函数期望一个名为 'args' 的字典
+        result = execute_tool(
+            "tool_generate_orders_from_latest_diagnosis",
+            {"patient_id": body.patient_id},
+        )
+        # result: {patient_id, diagnosis, prescription, requisition}
+        pres = result["prescription"]
+        req = result["requisition"]
+
+        pres_out = schemas.PrescriptionFormOut(**pres)
+        req_out = schemas.RequisitionFormOut(**req)
+
+        return schemas.AutoOrdersResponse(
+            patient_id=body.patient_id,
+            prescription=pres_out,
+            requisition=req_out,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))

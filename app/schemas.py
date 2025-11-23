@@ -196,10 +196,42 @@ class LabRegistrationOut(LabRegistrationCreate):
 
 # ---------------- Agent ----------------
 class WorkflowRequest(BaseModel):
-    query: str
+    # 直接调用工具，不需要自然语言聊天。
+    tool: str = Field(..., description="Name of the tool to execute.")
+    arguments: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="JSON arguments to pass into the selected tool.",
+    )
+    # 兼容字段：如果你仍想传自然语言给上游 LLM，可选地带上 query
+    query: Optional[str] = Field(
+        default=None,
+        description="Optional natural language prompt for external LLM routing. "
+                    "Not used by the backend directly.",
+    )
 
 
 class WorkflowResponse(BaseModel):
     tool: str
     arguments: Dict[str, Any]
     result: Any
+
+
+# ✅ 新增：专门给 “从最新诊断自动生成处方 + 检验单” 用的 schema
+
+class AutoOrdersRequest(BaseModel):
+    """
+    Request body for AI workflow that generates both:
+      - a PRESCRIPTION_FORM row
+      - a REQUISITION_FORM row
+    based solely on the patient's latest diagnosis.
+    """
+    patient_id: int = Field(..., description="Target patient id.")
+
+
+class AutoOrdersResponse(BaseModel):
+    """
+    Response for AI workflow that created both prescription and requisition.
+    """
+    patient_id: int
+    prescription: PrescriptionFormOut
+    requisition: RequisitionFormOut
