@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from . import crud, schemas
+from app.schemas import WorkflowRequest, WorkflowResponse
+from app.llm_tools import llm_route_to_tool, execute_tool
 
 router = APIRouter()
 
@@ -329,3 +331,30 @@ def get_lab(lab_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+    # ----------- AI function calling demo -----------
+
+@router.post("/workflow", response_model=WorkflowResponse)
+def run_workflow(payload: WorkflowRequest):
+    """
+    工作流入口：
+    - 模型决定要调用哪个工具
+    - 我们执行工具
+    - 返回工具执行结果
+    """
+
+    # ① 模型决定调用哪个工具
+    route = llm_route_to_tool(payload.query)
+
+    # route = { "function_name": "...", "arguments": {...}}
+
+    # ② 执行工具
+    result = execute_tool(route["function_name"], route["arguments"])
+
+    # ③ 返回工具执行结果（无自然语言）
+    return WorkflowResponse(
+        tool=route["function_name"],
+        arguments=route["arguments"],
+        result=result
+    )
+

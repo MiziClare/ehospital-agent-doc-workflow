@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional
+from typing import Dict, Any, Optional
 
 # ---------------- Patients ----------------
 
@@ -193,3 +193,13 @@ class LabRegistrationOut(LabRegistrationCreate):
 
     class Config:
         orm_mode = True
+
+# ---------------- Agent ----------------
+class WorkflowRequest(BaseModel):
+    query: str
+
+
+class WorkflowResponse(BaseModel):
+    tool: str
+    arguments: Dict[str, Any]
+    result: Any
