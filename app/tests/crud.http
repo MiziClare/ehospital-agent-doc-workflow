@@ -94,10 +94,10 @@ GET {{baseUrl}}/preferences?skip=0&limit=20
 GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=pharmacy
 GET {{baseUrl}}/preferences/by-patient?patient_id=1&preference_type=lab
 
-### 新接口：根据 patient_id 返回 pharmacy 偏好（只含 pharmacy_id + notes） ⭐
+### 新接口：根据 patient_id 返回 pharmacy 偏好 ⭐
 GET {{baseUrl}}/preferences/pharmacy?patient_id=1
 
-### 新接口：根据 patient_id 返回 lab 偏好（只含 lab_id + notes） ⭐
+### 新接口：根据 patient_id 返回 lab 偏好 ⭐
 GET {{baseUrl}}/preferences/lab?patient_id=1
 
 ############################################################

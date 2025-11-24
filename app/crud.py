@@ -184,6 +184,46 @@ def get_lab_preferences_by_patient(patient_id: int) -> List[Dict[str, Any]]:
     return get_preferences_by_patient_and_type(patient_id, "lab")
 
 
+# 新增：获取详细的偏好药店信息
+def get_detailed_pharmacy_preferences(patient_id: int) -> List[Dict[str, Any]]:
+    """获取病人的偏好药店，并附带完整的药店详情和距离。"""
+    patient = get_patient(patient_id)
+    if not patient:
+        return []
+
+    _, patient_coords = _parse_address_with_coords(patient.get("contact_info"))
+
+    preferences = get_pharmacy_preferences_by_patient(patient_id)
+    detailed_preferences = []
+
+    for pref in preferences:
+        pharmacy_id = pref.get("pharmacy_id")
+        if not pharmacy_id:
+            continue
+
+        pharmacy_details = get_pharmacy(pharmacy_id)
+        if not pharmacy_details:
+            continue
+
+        plain_address, pharmacy_coords = _parse_address_with_coords(pharmacy_details.get("address"))
+        distance = None
+        if patient_coords and pharmacy_coords:
+            distance = _haversine_distance(
+                patient_coords["lat"], patient_coords["lng"],
+                pharmacy_coords["lat"], pharmacy_coords["lng"]
+            )
+
+        detailed_preferences.append({
+            **pharmacy_details,
+            "address": plain_address,
+            "coordinates": pharmacy_coords,
+            "distance_km": round(distance, 2) if distance is not None else None,
+            "notes": pref.get("notes")  # 附加偏好备注
+        })
+
+    return detailed_preferences
+
+
 # ---------------- Prescription ----------------
 
 def create_prescription(obj_in: schemas.PrescriptionFormCreate) -> Dict[str, Any]:
@@ -376,6 +416,46 @@ def get_lab(lab_id: int) -> Optional[Dict[str, Any]]:
         if rec.get("lab_id") == lab_id or rec.get("id") == lab_id:
             return rec
     return None
+
+
+# 新增：获取详细的偏好实验室信息
+def get_detailed_lab_preferences(patient_id: int) -> List[Dict[str, Any]]:
+    """获取病人的偏好实验室，并附带完整的实验室详情和距离。"""
+    patient = get_patient(patient_id)
+    if not patient:
+        return []
+
+    _, patient_coords = _parse_address_with_coords(patient.get("contact_info"))
+
+    preferences = get_lab_preferences_by_patient(patient_id)
+    detailed_preferences = []
+
+    for pref in preferences:
+        lab_id = pref.get("lab_id")
+        if not lab_id:
+            continue
+
+        lab_details = get_lab(lab_id)
+        if not lab_details:
+            continue
+
+        plain_address, lab_coords = _parse_address_with_coords(lab_details.get("address"))
+        distance = None
+        if patient_coords and lab_coords:
+            distance = _haversine_distance(
+                patient_coords["lat"], patient_coords["lng"],
+                lab_coords["lat"], lab_coords["lng"]
+            )
+
+        detailed_preferences.append({
+            **lab_details,
+            "address": plain_address,
+            "coordinates": lab_coords,
+            "distance_km": round(distance, 2) if distance is not None else None,
+            "notes": pref.get("notes")  # 附加偏好备注
+        })
+
+    return detailed_preferences
 
 
 # 新增：获取最近的实验室
