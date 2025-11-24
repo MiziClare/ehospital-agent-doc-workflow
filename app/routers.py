@@ -221,20 +221,49 @@ def list_prescriptions(skip: int = 0, limit: int = Query(100, le=1000)):
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-@router.get("/prescriptions/{prescription_id}", response_model=schemas.PrescriptionFormOut)
+
+# ✏️ 微调：单条查询处方也返回带 pharmacy 信息的结构
+@router.get("/prescriptions/{prescription_id}", response_model=schemas.PrescriptionWithPharmacyOut)
 def get_prescription(prescription_id: str):
+    """
+    获取单条处方，返回结构与列表/最新接口一致：
+    {
+      "prescription": { ...PrescriptionFormOut... },
+      "pharmacy_name": "...",
+      "pharmacy_address": "纯地址（去掉经纬度 JSON）"
+    }
+    """
     try:
-        obj = crud.get_prescription(prescription_id)
-        if not obj:
+        pres = crud.get_prescription(prescription_id)
+        if not pres:
             raise HTTPException(status_code=404, detail="Prescription not found")
-        return obj
+
+        pharmacy_name = None
+        pharmacy_address = None
+        pharmacy_id = pres.get("pharmacy_id")
+
+        if pharmacy_id is not None:
+            ph = crud.get_pharmacy(pharmacy_id)
+            if ph:
+                pharmacy_name = ph.get("name")
+                raw_addr = ph.get("address")
+                if raw_addr and "||" in raw_addr:
+                    pharmacy_address = raw_addr.split("||", 1)[0].strip()
+                else:
+                    pharmacy_address = raw_addr
+
+        pres_out = schemas.PrescriptionFormOut(**pres)
+        return schemas.PrescriptionWithPharmacyOut(
+            prescription=pres_out,
+            pharmacy_name=pharmacy_name,
+            pharmacy_address=pharmacy_address,
+        )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 
-# 新增：通用接口，用于部分更新一个处方
 @router.patch("/prescriptions/{prescription_id}", response_model=schemas.PrescriptionFormOut)
 def update_prescription(prescription_id: str, payload: schemas.PrescriptionFormUpdate):
     """
@@ -394,20 +423,49 @@ def list_requisitions(skip: int = 0, limit: int = Query(100, le=1000)):
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-@router.get("/requisitions/{requisition_id}", response_model=schemas.RequisitionFormOut)
+
+# ✏️ 微调：单条查询检验申请也返回带 lab 信息的结构
+@router.get("/requisitions/{requisition_id}", response_model=schemas.RequisitionWithLabOut)
 def get_requisition(requisition_id: str):
+    """
+    获取单条检验申请，返回结构与列表/最新接口一致：
+    {
+      "requisition": { ...RequisitionFormOut... },
+      "lab_name": "...",
+      "lab_address": "纯地址（去掉经纬度 JSON）"
+    }
+    """
     try:
-        obj = crud.get_requisition(requisition_id)
-        if not obj:
+        req = crud.get_requisition(requisition_id)
+        if not req:
             raise HTTPException(status_code=404, detail="Requisition not found")
-        return obj
+
+        lab_name = None
+        lab_address = None
+        lab_id = req.get("lab_id")
+
+        if lab_id is not None:
+            lab = crud.get_lab(lab_id)
+            if lab:
+                lab_name = lab.get("name")
+                raw_addr = lab.get("address")
+                if raw_addr and "||" in raw_addr:
+                    lab_address = raw_addr.split("||", 1)[0].strip()
+                else:
+                    lab_address = raw_addr
+
+        req_out = schemas.RequisitionFormOut(**req)
+        return schemas.RequisitionWithLabOut(
+            requisition=req_out,
+            lab_name=lab_name,
+            lab_address=lab_address,
+        )
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 
-# 新增：通用接口，用于部分更新一个检验申请
 @router.patch("/requisitions/{requisition_id}", response_model=schemas.RequisitionFormOut)
 def update_requisition(requisition_id: str, payload: schemas.RequisitionFormUpdate):
     """
