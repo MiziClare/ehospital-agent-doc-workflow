@@ -207,6 +207,23 @@ def get_prescription(prescription_id: str):
         raise HTTPException(status_code=502, detail=str(e))
 
 
+# 新增：通用接口，用于部分更新一个处方
+@router.patch("/prescriptions/{prescription_id}", response_model=schemas.PrescriptionFormOut)
+def update_prescription(prescription_id: str, payload: schemas.PrescriptionFormUpdate):
+    """
+    部分更新一个已有的处方。只发送需要修改的字段。
+    """
+    try:
+        updated_prescription = crud.update_prescription(prescription_id, payload)
+        if not updated_prescription:
+            raise HTTPException(status_code=404, detail="Prescription not found to update.")
+        return updated_prescription
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # 只保留 path 形式的 latest：/prescriptions/latest/{patient_id}
 @router.get(
     "/prescriptions/latest/{patient_id}",
@@ -301,6 +318,23 @@ def get_requisition(requisition_id: str):
         raise HTTPException(status_code=502, detail=str(e))
 
 
+# 新增：通用接口，用于部分更新一个检验申请
+@router.patch("/requisitions/{requisition_id}", response_model=schemas.RequisitionFormOut)
+def update_requisition(requisition_id: str, payload: schemas.RequisitionFormUpdate):
+    """
+    部分更新一个已有的检验申请。只发送需要修改的字段。
+    """
+    try:
+        updated_requisition = crud.update_requisition(requisition_id, payload)
+        if not updated_requisition:
+            raise HTTPException(status_code=404, detail="Requisition not found to update.")
+        return updated_requisition
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # 只保留 path 形式的 latest：/requisitions/latest/{patient_id}
 @router.get(
     "/requisitions/latest/{patient_id}",
@@ -339,26 +373,6 @@ def get_latest_requisition_with_lab(patient_id: int = Path(..., description="Pat
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
-
-# 新增：更新最新检验申请的实验室
-@router.put("/requisitions/latest/lab", response_model=schemas.RequisitionFormOut)
-def update_latest_requisition_lab(payload: schemas.UpdateRequisitionLabRequest):
-    """
-    为指定病人的最新检验申请设置 lab_id。
-    """
-    try:
-        updated_requisition = crud.update_latest_requisition_lab(
-            patient_id=payload.patient_id,
-            lab_id=payload.lab_id
-        )
-        if not updated_requisition:
-            raise HTTPException(status_code=404, detail="Could not find latest requisition for the patient to update.")
-        return updated_requisition
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=str(e))
-
 
 # Pharmacy
 @router.post("/pharmacies", response_model=schemas.PharmacyRegistrationOut)

@@ -144,6 +144,19 @@ class PrescriptionWithPharmacyOut(BaseModel):
     pharmacy_address: Optional[str] = None
 
 
+# 新增：用于部分更新处方的模型
+class PrescriptionFormUpdate(BaseModel):
+    medication_name: Optional[str] = None
+    medication_strength: Optional[str] = None
+    medication_form: Optional[str] = None
+    dosage_instructions: Optional[str] = None
+    quantity: Optional[int] = None
+    refills_allowed: Optional[int] = None
+    expiry_date: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
 # ---------------- Requisition ----------------
 
 # Create：不包含 requisition_id，自增
@@ -185,6 +198,18 @@ class RequisitionWithLabOut(BaseModel):
     requisition: RequisitionFormOut
     lab_name: Optional[str] = None
     lab_address: Optional[str] = None
+
+
+# 新增：用于部分更新检验申请的模型
+class RequisitionFormUpdate(BaseModel):
+    department: Optional[str] = None
+    test_type: Optional[str] = None
+    test_code: Optional[str] = None
+    clinical_info: Optional[str] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None
+    result_date: Optional[str] = None
+    notes: Optional[str] = None
 
 
 # ---------------- Pharmacy ----------------

@@ -296,6 +296,22 @@ def get_latest_prescription_by_patient(patient_id: int) -> Optional[Dict[str, An
     return records[0]
 
 
+# 新增：部分更新一个处方记录
+def update_prescription(prescription_id: str, obj_in: schemas.PrescriptionFormUpdate) -> Optional[Dict[str, Any]]:
+    """部分更新一个已有的处方记录。"""
+    # 构造只包含要更新字段的 payload
+    update_data = obj_in.dict(exclude_unset=True)
+    if not update_data:
+        # 如果没有提供任何要更新的字段，直接返回现有记录
+        return get_prescription(prescription_id)
+
+    # 使用 PUT 方法更新记录
+    _put_remote("prescription_form", prescription_id, update_data)
+
+    # 返回更新后的完整记录
+    return get_prescription(prescription_id)
+
+
 # 新增：更新病人最新处方的 pharmacy_id
 def update_latest_prescription_pharmacy(patient_id: int, pharmacy_id: int) -> Optional[Dict[str, Any]]:
     """找到病人最新的处方，更新其 pharmacy_id，然后写回。"""
@@ -375,6 +391,18 @@ def get_latest_requisition_by_patient(patient_id: int) -> Optional[Dict[str, Any
 
     records.sort(key=_key, reverse=True)
     return records[0]
+
+
+# 新增：部分更新一个检验申请记录
+def update_requisition(requisition_id: str, obj_in: schemas.RequisitionFormUpdate) -> Optional[Dict[str, Any]]:
+    """部分更新一个已有的检验申请记录。"""
+    update_data = obj_in.dict(exclude_unset=True)
+    if not update_data:
+        return get_requisition(requisition_id)
+
+    _put_remote("requisition_form", requisition_id, update_data)
+
+    return get_requisition(requisition_id)
 
 
 # 新增：更新病人最新检验申请的 lab_id
