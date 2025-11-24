@@ -188,6 +188,9 @@ GET {{baseUrl}}/pharmacies?skip=0&limit=20
 ### 根据 pharmacy_id 获取单个 Pharmacy（根据实际 id 修改）
 GET {{baseUrl}}/pharmacies/1
 
+### 新增：获取距离 patient_id=1 最近的5个药店 ⭐
+GET {{baseUrl}}/pharmacies/nearest/1
+
 ############################################################
 # Lab
 ############################################################
@@ -211,6 +214,9 @@ GET {{baseUrl}}/labs?skip=0&limit=20
 
 ### 根据 lab_id 获取单个 Lab（根据实际 id 修改）
 GET {{baseUrl}}/labs/1
+
+### 新增：获取距离 patient_id=1 最近的5个实验室 ⭐
+GET {{baseUrl}}/labs/nearest/1
 
 ############################################################
 # Workflow / Agent tools
