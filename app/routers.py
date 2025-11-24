@@ -229,7 +229,11 @@ def get_latest_prescription_with_pharmacy(patient_id: int = Path(..., descriptio
             ph = crud.get_pharmacy(pharmacy_id)
             if ph:
                 pharmacy_name = ph.get("name")
-                pharmacy_address = ph.get("address")
+                raw_addr = ph.get("address")
+                if raw_addr and "||" in raw_addr:
+                    pharmacy_address = raw_addr.split("||", 1)[0].strip()
+                else:
+                    pharmacy_address = raw_addr
 
         pres_out = schemas.PrescriptionFormOut(**pres)
         return schemas.PrescriptionWithPharmacyOut(
@@ -319,7 +323,11 @@ def get_latest_requisition_with_lab(patient_id: int = Path(..., description="Pat
             lab = crud.get_lab(lab_id)
             if lab:
                 lab_name = lab.get("name")
-                lab_address = lab.get("address")
+                raw_addr = lab.get("address")
+                if raw_addr and "||" in raw_addr:
+                    lab_address = raw_addr.split("||", 1)[0].strip()
+                else:
+                    lab_address = raw_addr
 
         req_out = schemas.RequisitionFormOut(**req)
         return schemas.RequisitionWithLabOut(
