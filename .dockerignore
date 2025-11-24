@@ -1,0 +1,22 @@
+# virtual environments
+.venv/
+venv/
+
+# python cache
+__pycache__/
+*.pyc
+
+# git-related
+.git/
+.gitignore
+
+# IDE files
+.idea/
+.vscode/
+
+# env files
+.env
+.env.*
+
+# database file if you don't want it in the image
+app.db
