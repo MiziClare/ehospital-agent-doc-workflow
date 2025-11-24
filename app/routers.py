@@ -264,19 +264,19 @@ def get_latest_prescription_with_pharmacy(patient_id: int = Path(..., descriptio
         raise HTTPException(status_code=502, detail=str(e))
 
 
-# 新增：更新最新处方的药店
-@router.put("/prescriptions/latest/pharmacy", response_model=schemas.PrescriptionFormOut)
-def update_latest_prescription_pharmacy(payload: schemas.UpdatePrescriptionPharmacyRequest):
+# 修改：通过 ID 更新处方的药店
+@router.put("/prescriptions/{prescription_id}/pharmacy", response_model=schemas.PrescriptionFormOut)
+def update_prescription_pharmacy(prescription_id: str, payload: schemas.UpdatePrescriptionPharmacyRequest):
     """
-    为指定病人的最新处方设置 pharmacy_id。
+    为指定的处方记录设置 pharmacy_id。
     """
     try:
-        updated_prescription = crud.update_latest_prescription_pharmacy(
-            patient_id=payload.patient_id,
+        updated_prescription = crud.update_prescription_pharmacy(
+            prescription_id=prescription_id,
             pharmacy_id=payload.pharmacy_id
         )
         if not updated_prescription:
-            raise HTTPException(status_code=404, detail="Could not find latest prescription for the patient to update.")
+            raise HTTPException(status_code=404, detail="Could not find prescription to update.")
         return updated_prescription
     except HTTPException:
         raise

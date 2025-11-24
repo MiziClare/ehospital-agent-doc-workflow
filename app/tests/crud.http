@@ -128,7 +128,7 @@ Content-Type: application/json
 GET {{baseUrl}}/prescriptions?skip=0&limit=20
 
 ### 通过 prescription_id 获取单条处方（根据实际返回的 id 修正）
-GET {{baseUrl}}/prescriptions/1
+GET {{baseUrl}}/prescriptions/999
 
 ### 新增：部分更新 prescription_id=999 的处方 ⭐
 PATCH {{baseUrl}}/prescriptions/999
@@ -142,13 +142,12 @@ Content-Type: application/json
 ### 通过 path 方式获取 patient_id=1 最新处方 + pharmacy 信息 ⭐
 GET {{baseUrl}}/prescriptions/latest/1
 
-### 新增：为 patient_id=1 的最新处方设置 pharmacy_id=2 ⭐
-PUT {{baseUrl}}/prescriptions/latest/pharmacy
+### 新增：为 prescription_id=999 的处方设置 pharmacy_id=11 ⭐
+PUT {{baseUrl}}/prescriptions/999/pharmacy
 Content-Type: application/json
 
 {
-  "patient_id": 1,
-  "pharmacy_id": 2
+  "pharmacy_id": 11
 }
 
 ############################################################
@@ -177,7 +176,7 @@ Content-Type: application/json
 GET {{baseUrl}}/requisitions?skip=0&limit=20
 
 ### 通过 requisition_id 获取单条检验申请（根据实际返回的 id 修正）
-GET {{baseUrl}}/requisitions/1
+GET {{baseUrl}}/requisitions/1763837273
 
 ### 新增：部分更新 requisition_id=1 的检验申请 ⭐
 PATCH {{baseUrl}}/requisitions/1
@@ -191,12 +190,11 @@ Content-Type: application/json
 ### 通过 path 方式获取 patient_id=1 最新检验申请 + lab 信息 ⭐
 GET {{baseUrl}}/requisitions/latest/1
 
-### 新增：为 patient_id=1 的最新检验申请设置 lab_id=2 ⭐
-PUT {{baseUrl}}/requisitions/latest/lab
+### 新增：为 requisition_id=1 的检验申请设置 lab_id=2 ⭐
+PUT {{baseUrl}}/requisitions/1/lab
 Content-Type: application/json
 
 {
-  "patient_id": 1,
   "lab_id": 2
 }
 

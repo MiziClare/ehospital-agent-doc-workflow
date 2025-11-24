@@ -184,13 +184,11 @@ class RequisitionFormOut(RequisitionFormCreate):
 
 # 新增：用于更新最新处方 pharmacy_id 的请求体
 class UpdatePrescriptionPharmacyRequest(BaseModel):
-    patient_id: int
     pharmacy_id: int
 
 
 # 新增：用于更新最新检验申请 lab_id 的请求体
 class UpdateRequisitionLabRequest(BaseModel):
-    patient_id: int
     lab_id: int
 
 
