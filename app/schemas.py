@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field, validator
 from typing import Dict, Any, Optional
 
+# 新增：用于表示经纬度的模型
+class Coordinates(BaseModel):
+    lat: float
+    lng: float
+
+
 # ---------------- Patients ----------------
 
 class PatientsRegistrationCreate(BaseModel):
@@ -92,6 +98,18 @@ class PatientPreferenceSlimOut(BaseModel):
     notes: Optional[str] = None
 
 
+# 新增：用于返回偏好药店详细信息的模型
+class PreferredPharmacyOut(BaseModel):
+    pharmacy_id: int
+    name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    coordinates: Optional[Coordinates] = None
+    distance_km: Optional[float] = None
+    notes: Optional[str] = None  # 来自偏好表的备注
+
+
 # ---------------- Prescription ----------------
 
 # Create：不包含 prescription_id，自增
@@ -176,12 +194,6 @@ class PharmacyRegistrationOut(PharmacyRegistrationCreate):
         orm_mode = True
 
 
-# 新增：用于表示经纬度的模型
-class Coordinates(BaseModel):
-    lat: float
-    lng: float
-
-
 # 新增：用于返回最近药店信息的模型
 class NearbyPharmacyOut(BaseModel):
     pharmacy_id: int
@@ -210,6 +222,18 @@ class LabRegistrationOut(LabRegistrationCreate):
 
     class Config:
         orm_mode = True
+
+
+# 新增：用于返回偏好实验室详细信息的模型
+class PreferredLabOut(BaseModel):
+    lab_id: int
+    name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    coordinates: Optional[Coordinates] = None
+    distance_km: Optional[float] = None
+    notes: Optional[str] = None  # 来自偏好表的备注
 
 
 # 新增：用于返回最近实验室信息的模型

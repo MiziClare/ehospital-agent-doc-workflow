@@ -137,64 +137,38 @@ def get_preferences_by_patient_and_type(
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-# 新接口：patient 的 pharmacy 偏好（只含 pharmacy_id + notes）
+# 新接口：patient 的 pharmacy 偏好（返回完整信息）
 @router.get(
     "/preferences/pharmacy",
-    response_model=list[schemas.PatientPreferenceSlimOut],
+    response_model=list[schemas.PreferredPharmacyOut],
 )
 def get_pharmacy_preferences(
     patient_id: int = Query(..., description="Patient ID"),
 ):
     """
-    根据 patient_id 返回该病人的所有 pharmacy 偏好：
-    - target_id = pharmacy_id
-    - notes
+    根据 patient_id 返回该病人的所有 pharmacy 偏好，包含完整的药店信息和距离。
     """
     try:
-        records = crud.get_pharmacy_preferences_by_patient(patient_id)
-        result = []
-        for r in records:
-            target_id = r.get("pharmacy_id")
-            if target_id is None:
-                continue
-            result.append(
-                schemas.PatientPreferenceSlimOut(
-                    target_id=target_id,
-                    notes=r.get("notes"),
-                )
-            )
-        return result
+        records = crud.get_detailed_pharmacy_preferences(patient_id)
+        return records
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
 
-# 新接口：patient 的 lab 偏好（只含 lab_id + notes）
+# 新接口：patient 的 lab 偏好（返回完整信息）
 @router.get(
     "/preferences/lab",
-    response_model=list[schemas.PatientPreferenceSlimOut],
+    response_model=list[schemas.PreferredLabOut],
 )
 def get_lab_preferences(
     patient_id: int = Query(..., description="Patient ID"),
 ):
     """
-    根据 patient_id 返回该病人的所有 lab 偏好：
-    - target_id = lab_id
-    - notes
+    根据 patient_id 返回该病人的所有 lab 偏好，包含完整的实验室信息和距离。
     """
     try:
-        records = crud.get_lab_preferences_by_patient(patient_id)
-        result = []
-        for r in records:
-            target_id = r.get("lab_id")
-            if target_id is None:
-                continue
-            result.append(
-                schemas.PatientPreferenceSlimOut(
-                    target_id=target_id,
-                    notes=r.get("notes"),
-                )
-            )
-        return result
+        records = crud.get_detailed_lab_preferences(patient_id)
+        return records
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
