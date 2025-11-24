@@ -284,6 +284,41 @@ def update_prescription_pharmacy(prescription_id: str, payload: schemas.UpdatePr
         raise HTTPException(status_code=502, detail=str(e))
 
 
+# ✅ 新增：模拟发送处方传真到对应 pharmacy（根据 prescription_id 查询）
+@router.post("/prescriptions/{prescription_id}/fax", response_model=str)
+def fax_prescription(prescription_id: str):
+    """
+    Simulate sending a fax of a prescription form to its associated pharmacy.
+
+    Response example:
+      "Fax sent for patient (ID: 1)'s prescription form (ID: 1763831311) to pharmacy (ID: 2)."
+    """
+    try:
+        pres = crud.get_prescription(prescription_id)
+        if not pres:
+            raise HTTPException(status_code=404, detail=f"Prescription with ID {prescription_id} not found.")
+
+        patient_id = pres.get("patient_id")
+        pharmacy_id = pres.get("pharmacy_id")
+
+        if pharmacy_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Prescription {prescription_id} has no associated pharmacy_id."
+            )
+
+        message = (
+            f"Fax sent for patient (ID: {patient_id})'s prescription form "
+            f"(ID: {prescription_id}) to pharmacy (ID: {pharmacy_id})."
+        )
+        print(f"[FAX SIMULATION] {message}")
+        return message
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # Requisition
 @router.post("/requisitions", response_model=schemas.RequisitionFormOut)
 def create_requisition(payload: schemas.RequisitionFormCreate):
@@ -329,6 +364,41 @@ def update_requisition(requisition_id: str, payload: schemas.RequisitionFormUpda
         if not updated_requisition:
             raise HTTPException(status_code=404, detail="Requisition not found to update.")
         return updated_requisition
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# ✅ 新增：模拟发送检验申请传真到对应 lab（根据 requisition_id 查询）
+@router.post("/requisitions/{requisition_id}/fax", response_model=str)
+def fax_requisition(requisition_id: str):
+    """
+    Simulate sending a fax of a requisition form to its associated lab.
+
+    Response example:
+      "Fax sent for patient (ID: 1)'s requisition form (ID: 1763837273) to lab (ID: 3)."
+    """
+    try:
+        req = crud.get_requisition(requisition_id)
+        if not req:
+            raise HTTPException(status_code=404, detail=f"Requisition with ID {requisition_id} not found.")
+
+        patient_id = req.get("patient_id")
+        lab_id = req.get("lab_id")
+
+        if lab_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Requisition {requisition_id} has no associated lab_id."
+            )
+
+        message = (
+            f"Fax sent for patient (ID: {patient_id})'s requisition form "
+            f"(ID: {requisition_id}) to lab (ID: {lab_id})."
+        )
+        print(f"[FAX SIMULATION] {message}")
+        return message
     except HTTPException:
         raise
     except Exception as e:
