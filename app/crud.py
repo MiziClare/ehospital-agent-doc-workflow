@@ -1,6 +1,8 @@
 import requests
 from typing import Any, Dict, List, Optional
 from . import schemas
+import json
+from math import radians, sin, cos, sqrt, atan2
 
 # 远端表 URL 映射
 REMOTE_TABLES = {
@@ -37,6 +39,45 @@ def _extract_records(data: Any) -> List[Dict[str, Any]]:
     else:
         records = data
     return records if isinstance(records, list) else []
+
+
+# --- 新增：地理位置计算辅助函数 ---
+
+def _parse_address_with_coords(address_str: Optional[str]) -> (Optional[str], Optional[Dict[str, float]]):
+    """
+    解析 "地址||{json}" 格式的字符串。
+    返回 (地址, 坐标字典) 的元组。
+    """
+    if not address_str:
+        return None, None
+    parts = address_str.split("||", 1)
+    plain_address = parts[0].strip()
+    coords = None
+    if len(parts) > 1:
+        try:
+            coords = json.loads(parts[1])
+            if not isinstance(coords.get("lat"), (int, float)) or not isinstance(coords.get("lng"), (int, float)):
+                coords = None
+        except (json.JSONDecodeError, TypeError):
+            coords = None
+    return plain_address, coords
+
+
+def _haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    使用 Haversine 公式计算两个经纬度点之间的距离（公里）。
+    """
+    R = 6371  # 地球半径（公里）
+    lat1_rad, lon1_rad, lat2_rad, lon2_rad = map(radians, [lat1, lon1, lat2, lon2])
+
+    dlon = lon2_rad - lon1_rad
+    dlat = lat2_rad - lat1_rad
+
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+    return distance
 
 
 # ---------------- Patients ----------------
@@ -283,6 +324,38 @@ def get_pharmacy(pharmacy_id: int) -> Optional[Dict[str, Any]]:
     return None
 
 
+# 新增：获取最近的药店
+def get_nearest_pharmacies(patient_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+    """获取距离指定病人最近的药店列表。"""
+    patient = get_patient(patient_id)
+    if not patient:
+        return []
+
+    _, patient_coords = _parse_address_with_coords(patient.get("contact_info"))
+    if not patient_coords:
+        return []
+
+    all_pharmacies = get_pharmacies()
+    pharmacies_with_distance = []
+
+    for pharmacy in all_pharmacies:
+        plain_address, pharmacy_coords = _parse_address_with_coords(pharmacy.get("address"))
+        if pharmacy_coords:
+            distance = _haversine_distance(
+                patient_coords["lat"], patient_coords["lng"],
+                pharmacy_coords["lat"], pharmacy_coords["lng"]
+            )
+            pharmacies_with_distance.append({
+                **pharmacy,
+                "address": plain_address,
+                "coordinates": pharmacy_coords,
+                "distance_km": round(distance, 2)
+            })
+
+    pharmacies_with_distance.sort(key=lambda p: p["distance_km"])
+    return pharmacies_with_distance[:limit]
+
+
 # ---------------- Lab ----------------
 
 def create_lab(obj_in: schemas.LabRegistrationCreate) -> Dict[str, Any]:
@@ -303,3 +376,35 @@ def get_lab(lab_id: int) -> Optional[Dict[str, Any]]:
         if rec.get("lab_id") == lab_id or rec.get("id") == lab_id:
             return rec
     return None
+
+
+# 新增：获取最近的实验室
+def get_nearest_labs(patient_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+    """获取距离指定病人最近的实验室列表。"""
+    patient = get_patient(patient_id)
+    if not patient:
+        return []
+
+    _, patient_coords = _parse_address_with_coords(patient.get("contact_info"))
+    if not patient_coords:
+        return []
+
+    all_labs = get_labs()
+    labs_with_distance = []
+
+    for lab in all_labs:
+        plain_address, lab_coords = _parse_address_with_coords(lab.get("address"))
+        if lab_coords:
+            distance = _haversine_distance(
+                patient_coords["lat"], patient_coords["lng"],
+                lab_coords["lat"], lab_coords["lng"]
+            )
+            labs_with_distance.append({
+                **lab,
+                "address": plain_address,
+                "coordinates": lab_coords,
+                "distance_km": round(distance, 2)
+            })
+
+    labs_with_distance.sort(key=lambda l: l["distance_km"])
+    return labs_with_distance[:limit]

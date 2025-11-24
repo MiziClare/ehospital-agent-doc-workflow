@@ -176,6 +176,23 @@ class PharmacyRegistrationOut(PharmacyRegistrationCreate):
         orm_mode = True
 
 
+# 新增：用于表示经纬度的模型
+class Coordinates(BaseModel):
+    lat: float
+    lng: float
+
+
+# 新增：用于返回最近药店信息的模型
+class NearbyPharmacyOut(BaseModel):
+    pharmacy_id: int
+    name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    coordinates: Optional[Coordinates] = None
+    distance_km: Optional[float] = None
+
+
 # ---------------- Lab ----------------
 
 class LabRegistrationCreate(BaseModel):
@@ -193,6 +210,18 @@ class LabRegistrationOut(LabRegistrationCreate):
 
     class Config:
         orm_mode = True
+
+
+# 新增：用于返回最近实验室信息的模型
+class NearbyLabOut(BaseModel):
+    lab_id: int
+    name: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    coordinates: Optional[Coordinates] = None
+    distance_km: Optional[float] = None
+
 
 # ---------------- Agent ----------------
 class WorkflowRequest(BaseModel):

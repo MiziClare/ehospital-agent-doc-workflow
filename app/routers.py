@@ -365,6 +365,16 @@ def get_pharmacy(pharmacy_id: int):
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
+# 新增：获取最近的5个药店
+@router.get("/pharmacies/nearest/{patient_id}", response_model=list[schemas.NearbyPharmacyOut])
+def get_nearest_pharmacies(patient_id: int):
+    try:
+        pharmacies = crud.get_nearest_pharmacies(patient_id)
+        return pharmacies
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # Lab
 @router.post("/labs", response_model=schemas.LabRegistrationOut)
 def create_lab(payload: schemas.LabRegistrationCreate):
@@ -391,6 +401,16 @@ def get_lab(lab_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+# 新增：获取最近的5个实验室
+@router.get("/labs/nearest/{patient_id}", response_model=list[schemas.NearbyLabOut])
+def get_nearest_labs(patient_id: int):
+    try:
+        labs = crud.get_nearest_labs(patient_id)
+        return labs
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
 
     # ----------- AI function calling demo -----------
 
@@ -422,7 +442,7 @@ def run_workflow(payload: WorkflowRequest):
         raise HTTPException(status_code=502, detail=str(e))
 
 
-# ✅ 新增：高层 API，只要传 patient_id，让 AI 生成处方+检验单并入库
+# ✅ 新增：高层 API，只要传 patient_id，让 AI 生成处方+检验单并入库 ⭐
 @router.post("/workflow/generate-orders", response_model=schemas.AutoOrdersResponse)
 def generate_orders_from_latest_diagnosis(body: schemas.AutoOrdersRequest):
     """
