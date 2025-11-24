@@ -53,7 +53,7 @@ GET {{baseUrl}}/diagnosis?patient_id=1
 ### 通过 path 方式按 patient_id 获取该病人的所有诊断
 GET {{baseUrl}}/diagnosis/1
 
-### 通过 query 方式获取该病人最新诊断 ⭐
+### 通过 query 方式获取该病人最新诊断 ❌
 GET {{baseUrl}}/diagnosis/latest?patient_id=1
 
 ### 通过 path 方式获取该病人最新诊断 ⭐
