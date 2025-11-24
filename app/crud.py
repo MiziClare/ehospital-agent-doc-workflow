@@ -32,6 +32,18 @@ def _post_remote(table: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     return resp.json()
 
 
+def _put_remote(table: str, record_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    使用 PUT 方法更新远端服务器上的现有记录。
+    """
+    url = f"{REMOTE_TABLES[table]}/{record_id}"
+    resp = requests.put(url, json=payload, timeout=TIMEOUT)
+    resp.raise_for_status()
+    # PUT 请求成功后，远端 API 可能返回空内容或确认消息，
+    # 我们直接返回我们发送的 payload 作为确认。
+    return payload
+
+
 def _extract_records(data: Any) -> List[Dict[str, Any]]:
     """统一从远端响应中提取记录列表."""
     if isinstance(data, dict) and "data" in data:
@@ -284,6 +296,29 @@ def get_latest_prescription_by_patient(patient_id: int) -> Optional[Dict[str, An
     return records[0]
 
 
+# 新增：更新病人最新处方的 pharmacy_id
+def update_latest_prescription_pharmacy(patient_id: int, pharmacy_id: int) -> Optional[Dict[str, Any]]:
+    """找到病人最新的处方，更新其 pharmacy_id，然后写回。"""
+    latest_prescription = get_latest_prescription_by_patient(patient_id)
+    if not latest_prescription:
+        return None
+
+    # 获取记录的 ID
+    record_id = latest_prescription.get("prescription_id")
+    if not record_id:
+        return None # 无法识别要更新的记录
+
+    # 构造只包含要更新字段的 payload
+    update_payload = {"pharmacy_id": pharmacy_id}
+
+    # 使用 PUT 方法更新记录
+    _put_remote("prescription_form", str(record_id), update_payload)
+
+    # 返回更新后的完整对象以供前端使用
+    latest_prescription["pharmacy_id"] = pharmacy_id
+    return latest_prescription
+
+
 # ---------------- Requisition ----------------
 
 def create_requisition(obj_in: schemas.RequisitionFormCreate) -> Dict[str, Any]:
@@ -340,6 +375,29 @@ def get_latest_requisition_by_patient(patient_id: int) -> Optional[Dict[str, Any
 
     records.sort(key=_key, reverse=True)
     return records[0]
+
+
+# 新增：更新病人最新检验申请的 lab_id
+def update_latest_requisition_lab(patient_id: int, lab_id: int) -> Optional[Dict[str, Any]]:
+    """找到病人最新的检验申请，更新其 lab_id，然后写回。"""
+    latest_requisition = get_latest_requisition_by_patient(patient_id)
+    if not latest_requisition:
+        return None
+
+    # 获取记录的 ID
+    record_id = latest_requisition.get("requisition_id")
+    if not record_id:
+        return None
+
+    # 构造只包含要更新字段的 payload
+    update_payload = {"lab_id": lab_id}
+
+    # 使用 PUT 方法更新记录
+    _put_remote("requisition_form", str(record_id), update_payload)
+
+    # 返回更新后的完整对象以供前端使用
+    latest_requisition["lab_id"] = lab_id
+    return latest_requisition
 
 
 # ---------------- Pharmacy ----------------

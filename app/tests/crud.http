@@ -133,6 +133,15 @@ GET {{baseUrl}}/prescriptions/1
 ### 通过 path 方式获取 patient_id=1 最新处方 + pharmacy 信息 ⭐
 GET {{baseUrl}}/prescriptions/latest/1
 
+### 新增：为 patient_id=1 的最新处方设置 pharmacy_id=2 ⭐
+PUT {{baseUrl}}/prescriptions/latest/pharmacy
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "pharmacy_id": 2
+}
+
 ############################################################
 # Requisition
 ############################################################
@@ -163,6 +172,15 @@ GET {{baseUrl}}/requisitions/1
 
 ### 通过 path 方式获取 patient_id=1 最新检验申请 + lab 信息 ⭐
 GET {{baseUrl}}/requisitions/latest/1
+
+### 新增：为 patient_id=1 的最新检验申请设置 lab_id=2 ⭐
+PUT {{baseUrl}}/requisitions/latest/lab
+Content-Type: application/json
+
+{
+  "patient_id": 1,
+  "lab_id": 2
+}
 
 ############################################################
 # Pharmacy

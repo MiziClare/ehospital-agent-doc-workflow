@@ -243,6 +243,26 @@ def get_latest_prescription_with_pharmacy(patient_id: int = Path(..., descriptio
         raise HTTPException(status_code=502, detail=str(e))
 
 
+# 新增：更新最新处方的药店
+@router.put("/prescriptions/latest/pharmacy", response_model=schemas.PrescriptionFormOut)
+def update_latest_prescription_pharmacy(payload: schemas.UpdatePrescriptionPharmacyRequest):
+    """
+    为指定病人的最新处方设置 pharmacy_id。
+    """
+    try:
+        updated_prescription = crud.update_latest_prescription_pharmacy(
+            patient_id=payload.patient_id,
+            pharmacy_id=payload.pharmacy_id
+        )
+        if not updated_prescription:
+            raise HTTPException(status_code=404, detail="Could not find latest prescription for the patient to update.")
+        return updated_prescription
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # Requisition
 @router.post("/requisitions", response_model=schemas.RequisitionFormOut)
 def create_requisition(payload: schemas.RequisitionFormCreate):
@@ -311,6 +331,26 @@ def get_latest_requisition_with_lab(patient_id: int = Path(..., description="Pat
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
+
+# 新增：更新最新检验申请的实验室
+@router.put("/requisitions/latest/lab", response_model=schemas.RequisitionFormOut)
+def update_latest_requisition_lab(payload: schemas.UpdateRequisitionLabRequest):
+    """
+    为指定病人的最新检验申请设置 lab_id。
+    """
+    try:
+        updated_requisition = crud.update_latest_requisition_lab(
+            patient_id=payload.patient_id,
+            lab_id=payload.lab_id
+        )
+        if not updated_requisition:
+            raise HTTPException(status_code=404, detail="Could not find latest requisition for the patient to update.")
+        return updated_requisition
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
 
 # Pharmacy
 @router.post("/pharmacies", response_model=schemas.PharmacyRegistrationOut)
