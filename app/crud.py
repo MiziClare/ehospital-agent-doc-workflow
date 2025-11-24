@@ -312,27 +312,17 @@ def update_prescription(prescription_id: str, obj_in: schemas.PrescriptionFormUp
     return get_prescription(prescription_id)
 
 
-# 新增：更新病人最新处方的 pharmacy_id
-def update_latest_prescription_pharmacy(patient_id: int, pharmacy_id: int) -> Optional[Dict[str, Any]]:
-    """找到病人最新的处方，更新其 pharmacy_id，然后写回。"""
-    latest_prescription = get_latest_prescription_by_patient(patient_id)
-    if not latest_prescription:
-        return None
-
-    # 获取记录的 ID
-    record_id = latest_prescription.get("prescription_id")
-    if not record_id:
-        return None # 无法识别要更新的记录
-
+# 修改：不再依赖“最新”，而是通过 ID 更新
+def update_prescription_pharmacy(prescription_id: str, pharmacy_id: int) -> Optional[Dict[str, Any]]:
+    """为指定的处方记录更新其 pharmacy_id。"""
     # 构造只包含要更新字段的 payload
     update_payload = {"pharmacy_id": pharmacy_id}
 
     # 使用 PUT 方法更新记录
-    _put_remote("prescription_form", str(record_id), update_payload)
+    _put_remote("prescription_form", prescription_id, update_payload)
 
     # 返回更新后的完整对象以供前端使用
-    latest_prescription["pharmacy_id"] = pharmacy_id
-    return latest_prescription
+    return get_prescription(prescription_id)
 
 
 # ---------------- Requisition ----------------
@@ -405,27 +395,17 @@ def update_requisition(requisition_id: str, obj_in: schemas.RequisitionFormUpdat
     return get_requisition(requisition_id)
 
 
-# 新增：更新病人最新检验申请的 lab_id
-def update_latest_requisition_lab(patient_id: int, lab_id: int) -> Optional[Dict[str, Any]]:
-    """找到病人最新的检验申请，更新其 lab_id，然后写回。"""
-    latest_requisition = get_latest_requisition_by_patient(patient_id)
-    if not latest_requisition:
-        return None
-
-    # 获取记录的 ID
-    record_id = latest_requisition.get("requisition_id")
-    if not record_id:
-        return None
-
+# 修改：不再依赖“最新”，而是通过 ID 更新
+def update_requisition_lab(requisition_id: str, lab_id: int) -> Optional[Dict[str, Any]]:
+    """为指定的检验申请记录更新其 lab_id。"""
     # 构造只包含要更新字段的 payload
     update_payload = {"lab_id": lab_id}
 
     # 使用 PUT 方法更新记录
-    _put_remote("requisition_form", str(record_id), update_payload)
+    _put_remote("requisition_form", requisition_id, update_payload)
 
     # 返回更新后的完整对象以供前端使用
-    latest_requisition["lab_id"] = lab_id
-    return latest_requisition
+    return get_requisition(requisition_id)
 
 
 # ---------------- Pharmacy ----------------
