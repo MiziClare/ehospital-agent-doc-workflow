@@ -299,29 +299,39 @@ def get_latest_prescription_by_patient(patient_id: int) -> Optional[Dict[str, An
 # 新增：部分更新一个处方记录
 def update_prescription(prescription_id: str, obj_in: schemas.PrescriptionFormUpdate) -> Optional[Dict[str, Any]]:
     """部分更新一个已有的处方记录。"""
-    # 构造只包含要更新字段的 payload
-    update_data = obj_in.dict(exclude_unset=True)
-    if not update_data:
-        # 如果没有提供任何要更新的字段，直接返回现有记录
-        return get_prescription(prescription_id)
 
-    # 使用 PUT 方法更新记录
+    # 1) 先取出现有记录，若不存在则返回 None，让上层路由返回 404
+    existing = get_prescription(prescription_id)
+    if not existing:
+        return None
+
+    # 2) 拿到本次请求里“显式要改”的字段
+    raw_update = obj_in.dict(exclude_unset=True)
+
+    # 3) 过滤掉值未变化的字段（幂等 PATCH 不再调用远端）
+    update_data = {k: v for k, v in raw_update.items() if existing.get(k) != v}
+
+    if not update_data:
+        # 没有任何实际变化，直接返回现有记录，避免远端 404/出错
+        return existing
+
+    # 4) 只有在确实有变化时才调用远端 PUT
     _put_remote("prescription_form", prescription_id, update_data)
 
-    # 返回更新后的完整记录
+    # 5) 返回更新后的完整记录
     return get_prescription(prescription_id)
 
 
 # 修改：不再依赖“最新”，而是通过 ID 更新
 def update_prescription_pharmacy(prescription_id: str, pharmacy_id: int) -> Optional[Dict[str, Any]]:
     """为指定的处方记录更新其 pharmacy_id。"""
-    # 构造只包含要更新字段的 payload
+    # 先检查记录是否存在
+    existing = get_prescription(prescription_id)
+    if not existing:
+        return None
+
     update_payload = {"pharmacy_id": pharmacy_id}
-
-    # 使用 PUT 方法更新记录
     _put_remote("prescription_form", prescription_id, update_payload)
-
-    # 返回更新后的完整对象以供前端使用
     return get_prescription(prescription_id)
 
 
@@ -386,25 +396,30 @@ def get_latest_requisition_by_patient(patient_id: int) -> Optional[Dict[str, Any
 # 新增：部分更新一个检验申请记录
 def update_requisition(requisition_id: str, obj_in: schemas.RequisitionFormUpdate) -> Optional[Dict[str, Any]]:
     """部分更新一个已有的检验申请记录。"""
-    update_data = obj_in.dict(exclude_unset=True)
+
+    existing = get_requisition(requisition_id)
+    if not existing:
+        return None
+
+    raw_update = obj_in.dict(exclude_unset=True)
+    update_data = {k: v for k, v in raw_update.items() if existing.get(k) != v}
+
     if not update_data:
-        return get_requisition(requisition_id)
+        return existing
 
     _put_remote("requisition_form", requisition_id, update_data)
-
     return get_requisition(requisition_id)
 
 
 # 修改：不再依赖“最新”，而是通过 ID 更新
 def update_requisition_lab(requisition_id: str, lab_id: int) -> Optional[Dict[str, Any]]:
     """为指定的检验申请记录更新其 lab_id。"""
-    # 构造只包含要更新字段的 payload
+    existing = get_requisition(requisition_id)
+    if not existing:
+        return None
+
     update_payload = {"lab_id": lab_id}
-
-    # 使用 PUT 方法更新记录
     _put_remote("requisition_form", requisition_id, update_payload)
-
-    # 返回更新后的完整对象以供前端使用
     return get_requisition(requisition_id)
 
 

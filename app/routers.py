@@ -187,10 +187,37 @@ def create_prescription(payload: schemas.PrescriptionFormCreate):
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-@router.get("/prescriptions", response_model=list[schemas.PrescriptionFormOut])
+# ✏️ 微调：列表处方时也返回 pharmacy_name + 纯地址
+@router.get("/prescriptions", response_model=list[schemas.PrescriptionWithPharmacyOut])
 def list_prescriptions(skip: int = 0, limit: int = Query(100, le=1000)):
     try:
-        return crud.get_prescriptions(skip=skip, limit=limit)
+        records = crud.get_prescriptions(skip=skip, limit=limit)
+        result: list[schemas.PrescriptionWithPharmacyOut] = []
+
+        for pres in records:
+            pharmacy_name = None
+            pharmacy_address = None
+            pharmacy_id = pres.get("pharmacy_id")
+
+            if pharmacy_id is not None:
+                ph = crud.get_pharmacy(pharmacy_id)
+                if ph:
+                    pharmacy_name = ph.get("name")
+                    raw_addr = ph.get("address")
+                    if raw_addr and "||" in raw_addr:
+                        pharmacy_address = raw_addr.split("||", 1)[0].strip()
+                    else:
+                        pharmacy_address = raw_addr
+
+            pres_out = schemas.PrescriptionFormOut(**pres)
+            result.append(
+                schemas.PrescriptionWithPharmacyOut(
+                    prescription=pres_out,
+                    pharmacy_name=pharmacy_name,
+                    pharmacy_address=pharmacy_address,
+                )
+            )
+        return result
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
@@ -333,10 +360,37 @@ def create_requisition(payload: schemas.RequisitionFormCreate):
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-@router.get("/requisitions", response_model=list[schemas.RequisitionFormOut])
+# ✏️ 微调：列表检验申请时也返回 lab_name + 纯地址
+@router.get("/requisitions", response_model=list[schemas.RequisitionWithLabOut])
 def list_requisitions(skip: int = 0, limit: int = Query(100, le=1000)):
     try:
-        return crud.get_requisitions(skip=skip, limit=limit)
+        records = crud.get_requisitions(skip=skip, limit=limit)
+        result: list[schemas.RequisitionWithLabOut] = []
+
+        for req in records:
+            lab_name = None
+            lab_address = None
+            lab_id = req.get("lab_id")
+
+            if lab_id is not None:
+                lab = crud.get_lab(lab_id)
+                if lab:
+                    lab_name = lab.get("name")
+                    raw_addr = lab.get("address")
+                    if raw_addr and "||" in raw_addr:
+                        lab_address = raw_addr.split("||", 1)[0].strip()
+                    else:
+                        lab_address = raw_addr
+
+            req_out = schemas.RequisitionFormOut(**req)
+            result.append(
+                schemas.RequisitionWithLabOut(
+                    requisition=req_out,
+                    lab_name=lab_name,
+                    lab_address=lab_address,
+                )
+            )
+        return result
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
