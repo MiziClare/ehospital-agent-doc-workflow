@@ -53,9 +53,6 @@ GET {{baseUrl}}/diagnosis?patient_id=1
 ### 通过 path 方式按 patient_id 获取该病人的所有诊断
 GET {{baseUrl}}/diagnosis/1
 
-### 通过 query 方式获取该病人最新诊断 ❌
-GET {{baseUrl}}/diagnosis/latest?patient_id=1
-
 ### 通过 path 方式获取该病人最新诊断 ⭐
 GET {{baseUrl}}/diagnosis/latest/1
 
@@ -127,7 +124,7 @@ Content-Type: application/json
 ### 列出所有处方
 GET {{baseUrl}}/prescriptions?skip=0&limit=20
 
-### 通过 prescription_id 获取单条处方（根据实际返回的 id 修正）
+### 通过 prescription_id 获取单条处方（根据实际返回的 id 修正）⭐
 GET {{baseUrl}}/prescriptions/999
 
 ### 新增：部分更新 prescription_id=999 的处方 ⭐
@@ -136,7 +133,7 @@ Content-Type: application/json
 
 {
   "status": "completed",
-  "notes": "<<<<  o _ o  >>>>"
+  "notes": "<.  o _ o  .>"
 }
 
 ### 通过 path 方式获取 patient_id=1 最新处方 + pharmacy 信息 ⭐
@@ -147,7 +144,7 @@ PUT {{baseUrl}}/prescriptions/999/pharmacy
 Content-Type: application/json
 
 {
-  "pharmacy_id": 11
+  "pharmacy_id": 12
 }
 
 ### ✅ 新增：模拟为 prescription_id=999 发送传真到其 pharmacy ⭐
@@ -333,5 +330,5 @@ POST {{baseUrl}}/workflow/generate-orders
 Content-Type: application/json
 
 {
-  "patient_id": 4
+  "patient_id": 5
 }
