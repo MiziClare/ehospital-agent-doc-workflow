@@ -150,6 +150,9 @@ Content-Type: application/json
   "pharmacy_id": 11
 }
 
+### ✅ 新增：模拟为 prescription_id=999 发送传真到其 pharmacy ⭐
+POST {{baseUrl}}/prescriptions/999/fax
+
 ############################################################
 # Requisition
 ############################################################
@@ -197,6 +200,9 @@ Content-Type: application/json
 {
   "lab_id": 2
 }
+
+### ✅ 新增：模拟为 requisition_id=1763837271 发送传真到其 lab ⭐
+POST {{baseUrl}}/requisitions/1763837271/fax
 
 ############################################################
 # Pharmacy
