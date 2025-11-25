@@ -27,7 +27,7 @@ class PatientsRegistrationOut(PatientsRegistrationCreate):
     patient_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------------- Diagnosis ----------------
@@ -44,7 +44,7 @@ class DiagnosisOut(DiagnosisCreate):
     diagnosis_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ---------------- Patient Preference ----------------
@@ -89,7 +89,7 @@ class PatientPreferenceOut(PatientPreferenceCreate):
     preference_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 只返回 pharmacy_id/lab_id + notes 的“精简版”schema
@@ -134,7 +134,7 @@ class PrescriptionFormOut(PrescriptionFormCreate):
     prescription_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 最新处方 + 关联 pharmacy 数据
@@ -179,7 +179,7 @@ class RequisitionFormOut(RequisitionFormCreate):
     requisition_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 新增：用于更新最新处方 pharmacy_id 的请求体
@@ -226,7 +226,7 @@ class PharmacyRegistrationOut(PharmacyRegistrationCreate):
     pharmacy_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 新增：用于返回最近药店信息的模型
@@ -256,7 +256,7 @@ class LabRegistrationOut(LabRegistrationCreate):
     lab_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # 新增：用于返回偏好实验室详细信息的模型
