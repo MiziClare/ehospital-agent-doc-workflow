@@ -481,6 +481,31 @@ def update_requisition(requisition_id: str, payload: schemas.RequisitionFormUpda
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e))
 
+@router.put("/requisitions/{requisition_id}/lab", response_model=schemas.RequisitionFormOut)
+def set_requisition_lab(requisition_id: str, payload: dict):
+    """
+    为指定的 requisition 更新 lab_id。
+    接收格式：
+    {
+        "lab_id": 2
+    }
+    """
+    try:
+        lab_id = payload.get("lab_id")
+        if lab_id is None:
+            raise HTTPException(status_code=400, detail="lab_id is required.")
+
+        updated = crud.update_requisition_lab(requisition_id, lab_id)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Requisition not found.")
+
+        return updated
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
 
 # ✅ 新增：模拟发送检验申请传真到对应 lab（根据 requisition_id 查询）
 @router.post("/requisitions/{requisition_id}/fax", response_model=str)
