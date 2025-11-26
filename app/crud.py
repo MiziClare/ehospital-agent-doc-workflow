@@ -324,12 +324,18 @@ def update_prescription(prescription_id: str, obj_in: schemas.PrescriptionFormUp
 
 # 修改：不再依赖“最新”，而是通过 ID 更新
 def update_prescription_pharmacy(prescription_id: str, pharmacy_id: int) -> Optional[Dict[str, Any]]:
-    """为指定的处方记录更新其 pharmacy_id。"""
+    """为指定的处方记录更新其 pharmacy_id（幂等：若值相同则不下发 PUT）。"""
     # 先检查记录是否存在
     existing = get_prescription(prescription_id)
     if not existing:
         return None
 
+    # 如果当前 pharmacy_id 与要设置的一样，就视为幂等成功，直接返回
+    current_pharmacy_id = existing.get("pharmacy_id")
+    if current_pharmacy_id == pharmacy_id:
+        return existing
+
+    # 否则才真正下发 PUT
     update_payload = {"pharmacy_id": pharmacy_id}
     _put_remote("prescription_form", prescription_id, update_payload)
     return get_prescription(prescription_id)
@@ -413,11 +419,17 @@ def update_requisition(requisition_id: str, obj_in: schemas.RequisitionFormUpdat
 
 # 修改：不再依赖“最新”，而是通过 ID 更新
 def update_requisition_lab(requisition_id: str, lab_id: int) -> Optional[Dict[str, Any]]:
-    """为指定的检验申请记录更新其 lab_id。"""
+    """为指定的检验申请记录更新其 lab_id（幂等：若值相同则不下发 PUT）。"""
     existing = get_requisition(requisition_id)
     if not existing:
         return None
 
+    # 如果当前 lab_id 已经等于要设置的值，则直接返回现有记录
+    current_lab_id = existing.get("lab_id")
+    if current_lab_id == lab_id:
+        return existing
+
+    # 否则才真正下发 PUT
     update_payload = {"lab_id": lab_id}
     _put_remote("requisition_form", requisition_id, update_payload)
     return get_requisition(requisition_id)
