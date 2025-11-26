@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 # 新增：用于表示经纬度的模型
 class Coordinates(BaseModel):
@@ -25,6 +25,8 @@ class PatientsRegistrationCreate(BaseModel):
 
 class PatientsRegistrationOut(PatientsRegistrationCreate):
     patient_id: int
+    # 允许 family_doctor_id 为 str 或 int，兼容远端返回不同类型
+    family_doctor_id: Optional[Union[str, int]] = None
 
     class Config:
         from_attributes = True
