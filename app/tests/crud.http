@@ -190,8 +190,8 @@ Content-Type: application/json
 ### 通过 path 方式获取 patient_id=1 最新检验申请 + lab 信息 ⭐
 GET {{baseUrl}}/requisitions/latest/1
 
-### 新增：为 requisition_id=1 的检验申请设置 lab_id=2 ⭐
-PUT {{baseUrl}}/requisitions/1/lab
+### 新增：为 requisition_id=1763837273 的检验申请设置 lab_id=2 ⭐
+PUT {{baseUrl}}/requisitions/1763837273/lab
 Content-Type: application/json
 
 {
