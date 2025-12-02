@@ -6,12 +6,6 @@ from datetime import datetime, timedelta
 from . import crud, schemas
 import time # 引入 time 模块用于计时
 
-# 确保你有一个 config.py 文件，或者直接在这里设置你的 API key
-# from pydantic import BaseSettings
-# class Settings(BaseSettings):
-#     openai_api_key: str = "YOUR_API_KEY"
-# settings = Settings()
-
 client = OpenAI(api_key=settings.openai_api_key)
 
 # --- 统一的工具注册和执行机制 ---
@@ -313,3 +307,315 @@ def tool_generate_orders_from_latest_diagnosis(args: Dict[str, Any]) -> Dict[str
         print(f"\n[ERROR] An exception occurred in tool_generate_orders_from_latest_diagnosis: {type(e).__name__}: {e}")
         # 重新引发异常，以便 FastAPI 可以将其作为 5xx 错误返回给客户端
         raise
+
+
+# --- 新增：补全已有 PRESCRIPTION_FORM（不改 pharmacy_id） ---
+
+@register_tool
+def tool_complete_prescription_from_diagnosis(args: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Tool: complete_prescription_from_diagnosis
+
+    PURPOSE:
+      Given a patient_id and an existing PRESCRIPTION_FORM (by prescription_id),
+      use the latest diagnosis_description plus current form content to COMPLETE
+      or refine the prescription fields. The pharmacy_id MUST remain unchanged.
+
+    EXPECTED INPUT (args dict):
+      {
+        "patient_id": <int>,          # REQUIRED. Patient id.
+        "prescription_id": <str>      # REQUIRED. Existing prescription_id to complete.
+      }
+
+    BEHAVIOR:
+      1) Load latest diagnosis for this patient.
+      2) Load existing prescription form by prescription_id.
+      3) Ask an AI (OpenAI) to propose updated values ONLY for:
+           - medication_name
+           - medication_strength
+           - medication_form
+           - dosage_instructions
+           - quantity
+           - refills_allowed
+           - expiry_date
+           - status
+           - notes
+         based on diagnosis_description and current prescription content.
+      4) Call crud.update_prescription(...) to persist changes.
+      5) Return the updated prescription row as dict.
+    """
+    start_time = time.time()
+    patient_id = int(args["patient_id"])
+    prescription_id = str(args["prescription_id"])
+
+    # 1) 获取最新诊断
+    dx = crud.get_latest_diagnosis_by_patient(patient_id)
+    if not dx:
+        raise ValueError(f"No latest diagnosis found for patient_id={patient_id}")
+    diag_desc = (dx.get("diagnosis_description") or "").strip()
+    if not diag_desc:
+        raise ValueError(f"Latest diagnosis for patient_id={patient_id} has empty description")
+
+    # 2) 获取已有处方
+    pres = crud.get_prescription(prescription_id)
+    if not pres:
+        raise ValueError(f"Prescription with id={prescription_id} not found")
+
+    # 保留原 pharmacy_id，不允许 AI 修改
+    original_pharmacy_id = pres.get("pharmacy_id")
+
+    # 3) 调用 OpenAI 生成“补全字段”
+    system_prompt = (
+        "You are a clinical decision support assistant. "
+        "You are given:\n"
+        "1) A patient's latest diagnosis description.\n"
+        "2) An existing prescription form (JSON).\n\n"
+        "Your task: propose UPDATED values ONLY for editable fields, to make the prescription\n"
+        "clinically appropriate and complete. Do NOT invent or modify any pharmacy_id.\n"
+        "You MUST respond ONLY with JSON according to the provided tool schema."
+    )
+
+    user_prompt = (
+        f"Patient id: {patient_id}\n"
+        f"Latest diagnosis_description:\n"
+        f"--------------------\n{diag_desc}\n--------------------\n\n"
+        f"Existing prescription JSON:\n"
+        f"{json.dumps(pres, indent=2)}\n\n"
+        "Please fill or adjust ONLY these fields:\n"
+        "- medication_name\n"
+        "- medication_strength\n"
+        "- medication_form\n"
+        "- dosage_instructions\n"
+        "- quantity\n"
+        "- refills_allowed\n"
+        "- expiry_date (ISO date, e.g. 2025-12-31)\n"
+        "- status\n"
+        "- notes\n"
+        "Do NOT include pharmacy_id in your output."
+    )
+
+    tools_spec = [
+        {
+            "type": "function",
+            "function": {
+                "name": "propose_completed_prescription",
+                "description": "Propose updated fields for an existing prescription form.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "medication_name": {"type": "string"},
+                        "medication_strength": {"type": "string"},
+                        "medication_form": {"type": "string"},
+                        "dosage_instructions": {"type": "string"},
+                        "quantity": {"type": "integer"},
+                        "refills_allowed": {"type": "integer"},
+                        "expiry_date": {"type": "string"},
+                        "status": {"type": "string"},
+                        "notes": {"type": "string"}
+                    },
+                    "required": [
+                        "medication_name",
+                        "medication_strength",
+                        "medication_form",
+                        "dosage_instructions",
+                        "quantity",
+                        "refills_allowed",
+                        "expiry_date",
+                        "status",
+                        "notes"
+                    ]
+                },
+            },
+        }
+    ]
+
+    resp = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        tools=tools_spec,
+        tool_choice={"type": "function", "function": {"name": "propose_completed_prescription"}},
+    )
+
+    msg = resp.choices[0].message
+    if not msg.tool_calls:
+        raise ValueError("Model did not output tool calls for propose_completed_prescription")
+
+    tc = msg.tool_calls[0]
+    tool_args = json.loads(tc.function.arguments)
+
+    # 4) 构造更新 payload，只填可编辑字段
+    update_payload = schemas.PrescriptionFormUpdate(
+        medication_name=tool_args.get("medication_name"),
+        medication_strength=tool_args.get("medication_strength"),
+        medication_form=tool_args.get("medication_form"),
+        dosage_instructions=tool_args.get("dosage_instructions"),
+        quantity=tool_args.get("quantity"),
+        refills_allowed=tool_args.get("refills_allowed"),
+        expiry_date=tool_args.get("expiry_date"),
+        status=tool_args.get("status"),
+        notes=tool_args.get("notes"),
+    )
+
+    updated = crud.update_prescription(prescription_id, update_payload) or pres
+
+    # 强制确保 pharmacy_id 不被修改
+    if updated.get("pharmacy_id") != original_pharmacy_id:
+        updated["pharmacy_id"] = original_pharmacy_id
+
+    end_time = time.time()
+    print(f"[DEBUG] tool_complete_prescription_from_diagnosis finished in {end_time - start_time:.2f}s")
+    return updated
+
+
+# --- 新增：补全已有 REQUISITION_FORM（不改 lab_id） ---
+
+@register_tool
+def tool_complete_requisition_from_diagnosis(args: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Tool: complete_requisition_from_diagnosis
+
+    PURPOSE:
+      Given a patient_id and an existing REQUISITION_FORM (by requisition_id),
+      use the latest diagnosis_description plus current form content to COMPLETE
+      or refine the requisition fields. The lab_id MUST remain unchanged.
+
+    EXPECTED INPUT (args dict):
+      {
+        "patient_id": <int>,          # REQUIRED. Patient id.
+        "requisition_id": <str>       # REQUIRED. Existing requisition_id to complete.
+      }
+
+    BEHAVIOR:
+      1) Load latest diagnosis for this patient.
+      2) Load existing requisition form by requisition_id.
+      3) Ask an AI (OpenAI) to propose updated values ONLY for:
+           - department
+           - test_type
+           - test_code
+           - clinical_info
+           - priority
+           - status
+           - result_date
+           - notes
+         based on diagnosis_description and current requisition content.
+      4) Call crud.update_requisition(...) to persist changes.
+      5) Return the updated requisition row as dict.
+    """
+    start_time = time.time()
+    patient_id = int(args["patient_id"])
+    requisition_id = str(args["requisition_id"])
+
+    dx = crud.get_latest_diagnosis_by_patient(patient_id)
+    if not dx:
+        raise ValueError(f"No latest diagnosis found for patient_id={patient_id}")
+    diag_desc = (dx.get("diagnosis_description") or "").strip()
+    if not diag_desc:
+        raise ValueError(f"Latest diagnosis for patient_id={patient_id} has empty description")
+
+    req = crud.get_requisition(requisition_id)
+    if not req:
+        raise ValueError(f"Requisition with id={requisition_id} not found")
+
+    original_lab_id = req.get("lab_id")
+
+    system_prompt = (
+        "You are a clinical decision support assistant.\n"
+        "You are given:\n"
+        "1) A patient's latest diagnosis description.\n"
+        "2) An existing lab requisition form (JSON).\n\n"
+        "Your task: propose UPDATED values ONLY for editable fields, to make the requisition\n"
+        "clinically appropriate and complete. Do NOT invent or modify any lab_id.\n"
+        "You MUST respond ONLY with JSON according to the provided tool schema."
+    )
+
+    user_prompt = (
+        f"Patient id: {patient_id}\n"
+        f"Latest diagnosis_description:\n"
+        f"--------------------\n{diag_desc}\n--------------------\n\n"
+        f"Existing requisition JSON:\n"
+        f"{json.dumps(req, indent=2)}\n\n"
+        "Please fill or adjust ONLY these fields:\n"
+        "- department\n"
+        "- test_type\n"
+        "- test_code\n"
+        "- clinical_info\n"
+        "- priority\n"
+        "- status\n"
+        "- result_date (ISO datetime, e.g. 2025-11-25T10:00:00.000Z or null)\n"
+        "- notes\n"
+        "Do NOT include lab_id in your output."
+    )
+
+    tools_spec = [
+        {
+            "type": "function",
+            "function": {
+                "name": "propose_completed_requisition",
+                "description": "Propose updated fields for an existing requisition form.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "department": {"type": "string"},
+                        "test_type": {"type": "string"},
+                        "test_code": {"type": ["string", "null"]},
+                        "clinical_info": {"type": "string"},
+                        "priority": {"type": "string"},
+                        "status": {"type": "string"},
+                        "result_date": {"type": ["string", "null"]},
+                        "notes": {"type": "string"}
+                    },
+                    "required": [
+                        "department",
+                        "test_type",
+                        "clinical_info",
+                        "priority",
+                        "status",
+                        "result_date",
+                        "notes"
+                    ]
+                },
+            },
+        }
+    ]
+
+    resp = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        tools=tools_spec,
+        tool_choice={"type": "function", "function": {"name": "propose_completed_requisition"}},
+    )
+
+    msg = resp.choices[0].message
+    if not msg.tool_calls:
+        raise ValueError("Model did not output tool calls for propose_completed_requisition")
+
+    tc = msg.tool_calls[0]
+    tool_args = json.loads(tc.function.arguments)
+
+    update_payload = schemas.RequisitionFormUpdate(
+        department=tool_args.get("department"),
+        test_type=tool_args.get("test_type"),
+        test_code=tool_args.get("test_code"),
+        clinical_info=tool_args.get("clinical_info"),
+        priority=tool_args.get("priority"),
+        status=tool_args.get("status"),
+        result_date=tool_args.get("result_date"),
+        notes=tool_args.get("notes"),
+    )
+
+    updated = crud.update_requisition(requisition_id, update_payload) or req
+
+    # 强制确保 lab_id 不被修改
+    if updated.get("lab_id") != original_lab_id:
+        updated["lab_id"] = original_lab_id
+
+    end_time = time.time()
+    print(f"[DEBUG] tool_complete_requisition_from_diagnosis finished in {end_time - start_time:.2f}s")
+    return updated
+

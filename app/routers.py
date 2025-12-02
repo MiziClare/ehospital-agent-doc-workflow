@@ -655,7 +655,7 @@ def get_nearest_labs(patient_id: int):
         raise HTTPException(status_code=502, detail=str(e))
 
 
-    # ----------- AI function calling demo -----------
+# ----------- AI function calling demo -----------
 
 @router.post("/workflow", response_model=WorkflowResponse)
 def run_workflow(payload: WorkflowRequest):
@@ -729,6 +729,100 @@ def generate_orders_from_latest_diagnosis(body: schemas.AutoOrdersRequest):
         return schemas.AutoOrdersResponse(
             patient_id=body.patient_id,
             prescription=pres_out,
+            requisition=req_out,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# ✅ 新增：高层 API，根据最新诊断“补全已有处方” ⭐
+@router.post(
+    "/workflow/complete-prescription",
+    response_model=schemas.CompletePrescriptionResponse,
+)
+def complete_prescription_from_latest_diagnosis(body: schemas.CompletePrescriptionRequest):
+    """
+    High-level API for front-end.
+
+    INPUT JSON:
+      {
+        "patient_id": 1,
+        "prescription_id": "1764717231"
+      }
+
+    BEHAVIOR:
+      - For this patient_id and prescription_id, backend:
+        1) Reads the latest diagnosis for the patient.
+        2) Uses the LLM tool 'tool_complete_prescription_from_diagnosis'
+           to COMPLETE / refine the existing PRESCRIPTION_FORM
+           (pharmacy_id remains unchanged / may stay null).
+        3) Persists the updated record into remote table.
+      - Returns the updated prescription row.
+
+    OUTPUT JSON:
+      {
+        "patient_id": 1,
+        "prescription": { ...PrescriptionFormOut... }
+      }
+    """
+    try:
+        result = execute_tool(
+            "tool_complete_prescription_from_diagnosis",
+            {
+                "patient_id": body.patient_id,
+                "prescription_id": body.prescription_id,
+            },
+        )
+        pres_out = schemas.PrescriptionFormOut(**result)
+        return schemas.CompletePrescriptionResponse(
+            patient_id=body.patient_id,
+            prescription=pres_out,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
+# ✅ 新增：高层 API，根据最新诊断“补全已有检验申请” ⭐
+@router.post(
+    "/workflow/complete-requisition",
+    response_model=schemas.CompleteRequisitionResponse,
+)
+def complete_requisition_from_latest_diagnosis(body: schemas.CompleteRequisitionRequest):
+    """
+    High-level API for front-end.
+
+    INPUT JSON:
+      {
+        "patient_id": 1,
+        "requisition_id": "1763837273"
+      }
+
+    BEHAVIOR:
+      - For this patient_id and requisition_id, backend:
+        1) Reads the latest diagnosis for the patient.
+        2) Uses the LLM tool 'tool_complete_requisition_from_diagnosis'
+           to COMPLETE / refine the existing REQUISITION_FORM
+           (lab_id remains unchanged / may stay null).
+        3) Persists the updated record into remote table.
+      - Returns the updated requisition row.
+
+    OUTPUT JSON:
+      {
+        "patient_id": 1,
+        "requisition": { ...RequisitionFormOut... }
+      }
+    """
+    try:
+        result = execute_tool(
+            "tool_complete_requisition_from_diagnosis",
+            {
+                "patient_id": body.patient_id,
+                "requisition_id": body.requisition_id,
+            },
+        )
+        req_out = schemas.RequisitionFormOut(**result)
+        return schemas.CompleteRequisitionResponse(
+            patient_id=body.patient_id,
             requisition=req_out,
         )
     except Exception as e:

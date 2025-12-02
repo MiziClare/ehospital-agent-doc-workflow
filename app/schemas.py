@@ -325,3 +325,41 @@ class AutoOrdersResponse(BaseModel):
     patient_id: int
     prescription: PrescriptionFormOut
     requisition: RequisitionFormOut
+
+
+# ✅ 新增：高层 workflow - 补全已有处方
+
+class CompletePrescriptionRequest(BaseModel):
+    """
+    Request body for AI workflow that COMPLETES an existing PRESCRIPTION_FORM
+    based on the patient's latest diagnosis.
+    """
+    patient_id: int = Field(..., description="Target patient id.")
+    prescription_id: str = Field(..., description="Existing prescription_id to complete.")
+
+
+class CompletePrescriptionResponse(BaseModel):
+    """
+    Response for completed prescription.
+    """
+    patient_id: int
+    prescription: PrescriptionFormOut
+
+
+# ✅ 新增：高层 workflow - 补全已有检验申请
+
+class CompleteRequisitionRequest(BaseModel):
+    """
+    Request body for AI workflow that COMPLETES an existing REQUISITION_FORM
+    based on the patient's latest diagnosis.
+    """
+    patient_id: int = Field(..., description="Target patient id.")
+    requisition_id: str = Field(..., description="Existing requisition_id to complete.")
+
+
+class CompleteRequisitionResponse(BaseModel):
+    """
+    Response for completed requisition.
+    """
+    patient_id: int
+    requisition: RequisitionFormOut
