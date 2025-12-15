@@ -34,19 +34,19 @@ It is designed to be deployed independently while integrating seamlessly with ot
 ## 🖥️ Demo Screenshots
 
 ### Workflow Home
-<img src="docs/images/workflow_home.png" width="500">
+<img src="docs/images/workflow_home.png" width="400">
 
 ### Document Generation
-<img src="docs/images/document_generation.png" width="500">
+<img src="docs/images/document_generation.png" width="400">
 
 ### Facility Selection
-<img src="docs/images/facility_selection.png" width="500">
+<img src="docs/images/facility_selection.png" width="400">
 
 ### Professional Review
-<img src="docs/images/professional_review.png" width="500">
+<img src="docs/images/professional_review.png" width="400">
 
 ### Fax Confirmation
-<img src="docs/images/fax-sending.png" width="500">
+<img src="docs/images/fax-sending.png" width="400">
 
 ---
 
