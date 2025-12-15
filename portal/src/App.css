@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/80 rounded-3xl shadow-xl border border-white/60 ring-1 ring-slate-100/50;
+  }
+
+  .premium-button {
+    @apply transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent;
+  }
+}
+
+/* Page transition animations */
+.page-enter {
+  opacity: 0;
+  transform: translateX(30px) scale(0.98);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.98);
+  transition: all 0.4s ease-in-out;
+}
+
+/* Current step subtle glow and ring (replaces strong scale + animate-ping) */
+.current-step-glow {
+  animation: currentStepGlow 1.8s ease-in-out infinite;
+}
+
+.current-step-ring {
+  border: 2px solid rgba(34, 211, 238, 0.5);
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.25);
+  animation: currentStepRing 1.8s ease-in-out infinite;
+}
+
+@keyframes currentStepGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.15);
+  }
+}
+
+@keyframes currentStepRing {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+.step-animation {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  width: 8px;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #06b6d4 transparent;
+}
+
+/* Tabs Styling */
+.requisition-tabs .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+
+.requisition-tabs .ant-tabs-tab {
+  padding: 12px 24px;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.requisition-tabs .ant-tabs-tab:hover {
+  color: #06b6d4;
+}
+
+.requisition-tabs .ant-tabs-tab-active {
+  background: linear-gradient(135deg, #e0f2fe 0%, #ccfbf1 100%);
+}
+
+.requisition-tabs .ant-tabs-ink-bar {
+  background: linear-gradient(90deg, #06b6d4 0%, #14b8a6 100%);
+  height: 3px;
+}
