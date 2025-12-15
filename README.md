@@ -62,7 +62,7 @@ It is designed to be deployed independently while integrating seamlessly with ot
 - Google Maps API (Facility Location)
 
 ### Database
-- Shared **AWS-hosted cloud database** (course-provided)
+- Shared existing **AWS-hosted cloud database** 
 - No local database setup required
 
 ---
