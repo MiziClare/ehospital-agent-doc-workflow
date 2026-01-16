@@ -1,6 +1,6 @@
 # 🏥 AI-Agent Driven Clinical Document Workflow System
 
-This project is part of the **eHospital / eHealth project** (https://www.e-hospital.ca/) and focuses on automating the **generation, review, and distribution of clinical documents** using an AI-agent-driven workflow.
+This project is part of the uOttawa's **eHospital / eHealth project** (https://www.e-hospital.ca/) and focuses on automating the **generation, review, and distribution of clinical documents** using an AI-agent-driven workflow.
 
 The system operates **after a diagnosis has been generated** and converts clinical reasoning into **actionable medical documents**, including prescriptions and laboratory requisitions.
 
